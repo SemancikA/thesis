@@ -30,8 +30,8 @@ def rotate_images(input_folder, output_folder):
 
 
 # Specify the input and output folders
-input_folder = "/home/press/Documents/thesis/thesis/data aug/input folder"
-output_folder = "/home/press/Documents/thesis/thesis/data aug/aug_folder"
+input_folder = "/home/press/Documents/thesis/thesis/data aug/input"
+output_folder = "/home/press/Documents/thesis/thesis/data aug/output"
 
 # Call the function to rotate and save the images
 rotate_images(input_folder, output_folder)
