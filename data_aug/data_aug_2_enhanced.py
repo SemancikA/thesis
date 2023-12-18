@@ -7,8 +7,8 @@ from PIL import Image, ImageEnhance
 logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(levelname)s: %(message)s')
 
 # Define input and output directories
-input_dir = "/home/adam/Documents/thesis/thesis/data_aug/input"
-output_dir = "/home/adam/Documents/thesis/thesis/data_aug/output"
+input_dir = "/home/student515/Documents/thesis/Dataset/SRGAN_train"
+output_dir = "/home/student515/Documents/thesis/Dataset/SRGAN_train_aug"
 
 # Create output directory if it doesn't exist
 if not os.path.exists(output_dir):
