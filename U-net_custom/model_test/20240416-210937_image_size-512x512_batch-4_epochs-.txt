@@ -1,0 +1,1 @@
+20240416-210937_image_size-512x512_batch-4_epochs-2000_resize_factor-4_model_depth-2_model_type-unet_experiment-10-model-244
