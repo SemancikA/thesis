@@ -23,7 +23,7 @@ from PIL import Image
 # SIZE_Y = 512
 n_classes=3 #Number of classes for segmentation
 #batch_size = 8
-epochs = 10000
+epochs = 2000
 #DoI
 #try 2,4,8
 #larger dataset
@@ -33,12 +33,12 @@ epochs = 10000
 
 
 dataset_size = 320
-batch_sizes = [32] #max batch size = 32, pri 64 crash
+batch_sizes = [4,8,16,32] #max batch size = 32, pri 64 crash
 resize_factors = [4] #4, None
-model_depths = [4] #2,4,8 => model depth 4 best loss
+model_depths = [2,4,8,16] #2,4,8 => model depth 4 best loss
 model_types=[unet] #unet, unet_batch_norm => unet best loss
-string="_exp-17-with-scaling-random-crop"
-image_sizes = [512]
+string="_exp-18-DoE"
+image_sizes = [512,1024]
 
 for resize_factor in resize_factors:
     for SIZE_X in image_sizes:
