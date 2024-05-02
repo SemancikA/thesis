@@ -4,6 +4,7 @@ import os
 import nrrd
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras import backend as K
 from tensorflow.keras.metrics import MeanIoU
 from tensorflow.keras.callbacks import Callback
 from PIL import Image
@@ -157,3 +158,30 @@ def split_images_masks_into_patches(image_path, mask_path, image_save_path=None,
                 mask_patches.append(mask_patch)
 
     return image_patches, mask_patches
+
+
+def categorical_focal_loss(gamma=2., alpha=0.25):
+    """
+    Focal loss for multi-class classification.
+    This loss function is designed to address class imbalance by focusing more on hard-to-classify examples.
+    
+    Parameters:
+        gamma (float): Focusing parameter. Default is 2.0.
+        alpha (float): Balancing factor. Default is 0.25.
+        
+    Returns:
+        loss (function): A loss function taking (y_true, y_pred) as arguments and returning a loss value.
+    """
+    def focal_loss_fixed(y_true, y_pred):
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
+        
+        # Calculate cross entropy
+        cross_entropy = -y_true * K.log(y_pred)
+        
+        # Calculate loss
+        loss = alpha * K.pow(1 - y_pred, gamma) * cross_entropy
+
+        return K.mean(K.sum(loss, axis=-1))
+    
+    return focal_loss_fixed
