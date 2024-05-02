@@ -19,6 +19,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from PIL import Image
 from tensorflow.keras.metrics import MeanIoU
 import glob
+import rapidjson as rjson
 
 
 #Global variables
@@ -27,17 +28,20 @@ model_type=unet
 test_image_path = "/home/student515/Documents/thesis/Dataset/Unet/test_images"
 test_mask_path = "/home/student515/Documents/thesis/Dataset/Unet/test_masks"
 
-test_weights_path = "/home/student515/Documents/thesis/thesis/U-net_custom/model_test/exp-19_1024x1024"
+test_weights_path = "/home/student515/Documents/thesis/thesis/U-net_custom/model_test/exp-20"
 
 weights_paths = sorted(glob.glob(os.path.join(test_weights_path, "*.hdf5")))
 
-test_save_path="/home/student515/Documents/thesis/Dataset/Unet/test_predictions/exp-19_1024x1024"
+test_save_path="/home/student515/Documents/thesis/Dataset/Unet/test_predictions/exp-20"
 os.makedirs(test_save_path, exist_ok=True)
 
-test_text_file_path = test_save_path + "/test_results.txt"
+test_text_file_path = test_save_path + "/test_results.json"
 
 with open(test_text_file_path, 'w') as file:
-    file.write('')
+    rjson.dump([],file)
+
+with open(test_text_file_path, 'r') as file:
+    data_list = rjson.load(file)
 
 for weights_path in weights_paths:
 
@@ -127,6 +131,11 @@ for weights_path in weights_paths:
         pred_image.save(os.path.join(test_prediction_save_path, f"pred_mask_{i}.tif"))
 
     data_to_write = f"Accuracy_{acc}_IoU:_{iou.result().numpy()}_Per-Class Accuracy_{per_class_accuracy[0]}_{per_class_accuracy[1]}_{per_class_accuracy[2]}_Weight_{weight_name}"
+    data_list.append(data_to_write)
 
-    with open(test_text_file_path, 'a') as file:
-        file.write(data_to_write + "\n")
+    # with open(test_text_file_path, 'a') as file:
+    #     file.write(data_to_write + "\n")
+
+
+with open(test_text_file_path, 'w') as file:
+    rjson.dump(data_list, file, indent=4)

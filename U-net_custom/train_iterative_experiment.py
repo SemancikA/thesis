@@ -2,6 +2,7 @@ from model import unet
 from model_batch_norm import unet_batch_norm
 from functions import split_images_masks_into_patches
 from functions import GradientMonitoringCallback, NaNDebugCallback, CustomCallback
+from functions import categorical_focal_loss
 import os
 from tensorflow.keras.utils import normalize
 import numpy as np
@@ -19,47 +20,46 @@ from PIL import Image
 
 ####iterative experiment setup####
 ####Global variables###
-# SIZE_X = 512
-# SIZE_Y = 512
 n_classes=3 #Number of classes for segmentation
-#batch_size = 8
-epochs = 2000
-#DoI
-#try 2,4,8
-#larger dataset
-#porovnat s tresholdom
-#porovnat s dalsim materialom
-#postprocesor
-
+epochs = 1500
 
 dataset_size = 320
 batch_sizes = [4,8,16,32] #max batch size = 32, pri 64 crash
 resize_factors = [4] #4, None
 model_depths = [2,4,8,16] #2,4,8 => model depth 4 best loss
 model_types=[unet] #unet, unet_batch_norm => unet best loss
-string="_exp-18-DoE"
+string="_exp-21-DOE-focal_loss"
 image_sizes = [512,1024]
 
 for resize_factor in resize_factors:
     for SIZE_X in image_sizes:
-        for batch_size in batch_sizes:
-            for model_depth in model_depths:
+        for model_depth in model_depths:
+            for batch_size in batch_sizes:
                 for model_type in model_types:
 
+                    if SIZE_X == 512 and model_depth == 16 and (batch_size == 16 or batch_size == 32):
+                        continue
+
+                    if SIZE_X==1024 and batch_size == 32:
+                        continue
+
+                    if SIZE_X==1024 and batch_size == 16 and model_depth != 2:
+                        continue
+
+                    if SIZE_X==1024 and batch_size == 8 and (model_depth == 8 or model_depth == 16):
+                        continue       
+
                     SIZE_Y = SIZE_X
-                
-                    #Skip already trained models
-                    # if model_depth == 16 and model_type == unet:
-                    #     continue
+                    time_now=datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
                     
                     images_path = "/home/student515/Documents/thesis/Dataset/Unet/images/Al"
                     masks_path = "/home/student515/Documents/thesis/Dataset/Unet/masks/Al"
 
                     images_patches_save_path = "/home/student515/Documents/thesis/Dataset/Unet/train_patches"
                     masks_patches_save_path = "/home/student515/Documents/thesis/Dataset/Unet/train_masks_patches"
-                    model_save_dir='/home/student515/Documents/thesis/thesis/U-net_custom/model_save/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + "_model_type-" + str(model_type)[10:-19] + string
-                    log_dir = "/home/student515/Documents/thesis/thesis/U-net_custom/logs/"  + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + "_model_type-" + str(model_type)[10:-19] + string
-                    val_pred_save_dir = "/home/student515/Documents/thesis/Dataset/Unet/save_prediction_patches_train/"  + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + "_model_type-" + str(model_type)[10:-19] + string
+                    model_save_dir='/home/student515/Documents/thesis/thesis/U-net_custom/model_save/' + time_now +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + "_model_type-" + str(model_type)[10:-19] + string
+                    log_dir = "/home/student515/Documents/thesis/thesis/U-net_custom/logs/"  + time_now +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + "_model_type-" + str(model_type)[10:-19] + string
+                    val_pred_save_dir = "/home/student515/Documents/thesis/Dataset/Unet/save_prediction_patches_train/"  + time_now +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + "_model_type-" + str(model_type)[10:-19] + string
                     
                     os.makedirs(model_save_dir, exist_ok=True)
                     os.makedirs(val_pred_save_dir, exist_ok=True)
@@ -73,7 +73,6 @@ for resize_factor in resize_factors:
                     #Convert list to array for machine learning processing        
                     train_images = np.array(train_images)
                     train_images = np.expand_dims(train_images, axis=3)
-                    #train_images = normalize(train_images, axis=1)
                             
                     train_masks = np.array(train_masks,dtype=np.uint8)
 
@@ -96,7 +95,6 @@ for resize_factor in resize_factors:
 
                     X_train = normalize(X_train, axis=1)
                     X_val = normalize(X_val, axis=1)
-                    #X_test = normalize(X_test, axis=1)
 
                     train_masks_cat = to_categorical(y_train, num_classes=n_classes)
                     y_train_cat = train_masks_cat.reshape((y_train.shape[0], y_train.shape[1], y_train.shape[2], n_classes))
@@ -112,10 +110,7 @@ for resize_factor in resize_factors:
                         return model_type(n_classes=n_classes, IMG_HEIGHT=IMG_HEIGHT, IMG_WIDTH=IMG_WIDTH, IMG_CHANNELS=IMG_CHANNELS, lay=model_depth)
 
                     model = get_model()
-                    #optimizer = Adam(learning_rate=0.01, clipvalue=0.5)
-                    #optimizer = SGD(learning_rate=0.01, momentum=0.9)
-                    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-                    #model.compile(optimizer=optimizer, loss=categorical_focal_loss(gamma=2., alpha=0.25), metrics=['accuracy'])
+                    model.compile(optimizer='adam', loss=categorical_focal_loss(gamma=2.0, alpha=0.25), metrics=['accuracy'])
 
                     print(model.summary())
 
@@ -127,28 +122,15 @@ for resize_factor in resize_factors:
                     nan_debug_callback = NaNDebugCallback()
                     Gradient_monitoring_callback = GradientMonitoringCallback()
                     early_stop=EarlyStopping(monitor='val_loss', patience=100, verbose=1, mode='auto')
-                    checkpoint=ModelCheckpoint(model_save_dir + "/model-{epoch:02d}.hdf5", monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
+                    checkpoint=ModelCheckpoint(
+                        #filepath=model_save_dir + "/model-{epoch:02d}.hdf5",
+                        filepath=f"{model_save_dir}/{time_now}_image_size-{SIZE_X}x{SIZE_Y}_batch-{batch_size}_epoch-{{epoch:02d}}_resize_factor-{resize_factor}_model_depth-{model_depth}_{string}.hdf5",
+                        monitor='val_loss', 
+                        verbose=0, 
+                        save_best_only=True, 
+                        mode='auto')
                     ############################################
-
-                    #Data augmentation
-                    # Xdatagen = ImageDataGenerator(
-                    #     rotation_range=45,             # Degree range for random rotations
-                    #     horizontal_flip=True,           # To mirror images horizontally
-                    #     vertical_flip=True,             # To mirror images vertically
-                    #     fill_mode='reflect',            # Points outside the boundaries of the input are filled according to the given mode
-                    #     brightness_range=[0.9, 1.1],    # Adjusts brightness, simulating an intensity shift. Values <1 darken the image, values >1 brighten it.
-                    # )
-                    # Ydatagen = ImageDataGenerator(
-                    #     rotation_range=45,             # Degree range for random rotations
-                    #     horizontal_flip=True,           # To mirror images horizontally
-                    #     vertical_flip=True,             # To mirror images vertically
-                    #     fill_mode='reflect',            # Points outside the boundaries of the input are filled according to the given mode
-                    # )
-
-                    # Xtrain_generator = Xdatagen.flow(X_train, shuffle=False, batch_size=batch_size, seed=42)
-                    # Ytrain_generator = Ydatagen.flow(y_train_cat, shuffle=False, batch_size=batch_size, seed=42)
-                    # train_generator = zip(Xtrain_generator, Ytrain_generator)
-
+                    time_now +"_image_size-"+str(SIZE_X) +"x"+ str(SIZE_Y) + "_batch-"+str(batch_size) + "_epochs-"+str(epochs) + "_resize_factor-" + str(resize_factor) + "_model_depth-"+ str(model_depth) + string
 
                     dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train_cat))
 
@@ -189,13 +171,8 @@ for resize_factor in resize_factors:
                         image = tf.image.random_crop(image, image_crop_size, seed=seed)
                         label = tf.image.random_crop(label, label_crop_size, seed=seed)
 
-                        # # # Crop back to original size centered
-                        # image = tf.image.resize_with_crop_or_pad(image, original_size, original_size)
-                        # label = tf.image.resize_with_crop_or_pad(label, original_size, original_size)
-
                         return image, label
                     
-                    #dataset_size = len(X_train)
                     augmented_dataset = dataset.map(augment).repeat()
                     augmented_dataset = augmented_dataset.shuffle(buffer_size=(dataset_size)).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
@@ -231,21 +208,15 @@ for resize_factor in resize_factors:
                     # Train the model
                     history = model.fit(
                                         augmented_dataset,
-                                        #X_train, 
-                                        #y_train_cat,
-                                        #batch_size=batch_size,
                                         steps_per_epoch=dataset_size // batch_size,
                                         verbose=1,
                                         epochs=epochs,
                                         validation_data=(X_val, y_val_cat),
-                                        #class_weight=class_weights_dict,
                                         shuffle=True,
                                         callbacks=[tensorboard_callback, 
                                                 custom_callback,
                                                 #early_stop,
                                                 checkpoint, 
-                                                #nan_debug_callback,
-                                                #Gradient_monitoring_callback
                                                 ])
 
 

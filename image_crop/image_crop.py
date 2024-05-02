@@ -28,10 +28,9 @@ def crop_image(image_path, output_folder,pixels_to_crop_from_all_sides):
     #grayscale_image.save(os.path.join(output_folder, f"cropped_{pixels_to_crop_from_all_sides}_{os.path.basename(image_path)}"))
 
 #example usage
-image_path = "/home/student515/Documents/thesis/Dataset/Keyence_output/Al"  # Path to the input image
-output_folder = "/home/student515/Documents/thesis/Dataset/Image_crop_for_labeling/Al"  # Path to output folder
+image_path = "/home/student515/Documents/thesis/Dataset/Keyence_output/Al/test"  # Path to the input image
+output_folder = "/home/student515/Documents/thesis/Dataset/Image_crop_for_labeling/Al/test"  # Path to output folder
 pixels_to_crop_from_all_sides = 50  # Number of pixels to crop from all sides
-number_of_images_to_split_into = 4 # Number of images to split the grayscale image into
 
 #crop_image(image_path, output_folder, pixels_to_crop_from_all_sides)
 
