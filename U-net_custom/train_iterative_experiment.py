@@ -76,6 +76,20 @@ for resize_factor in resize_factors:
                             
                     train_masks = np.array(train_masks,dtype=np.uint8)
 
+                    train_masks_flatten = train_masks.flatten()
+                    labels, counts = np.unique(train_masks_flatten, return_counts=True)
+                    #Compute class weights
+                    class_weights = class_weight.compute_class_weight(
+                        class_weight='balanced', 
+                        classes=labels, 
+                        y=train_masks_flatten)
+                    
+                    #Compute percentual ratio of each class in dataset
+                    class_weights = class_weights/counts
+
+                    print("Counts: ", counts)
+                    print("Class weights: ", class_weights)
+
                     #Picking 15% for validation and remaining for training
                     X_train, X_val, y_train, y_val = train_test_split(train_images, train_masks, test_size = 0.15, random_state = 0)
 

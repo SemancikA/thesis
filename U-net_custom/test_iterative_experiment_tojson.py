@@ -25,14 +25,14 @@ import rapidjson as rjson
 #Global variables
 n_classes=3
 model_type=unet
-test_image_path = "/home/student515/Documents/thesis/Dataset/Unet/test_images"
-test_mask_path = "/home/student515/Documents/thesis/Dataset/Unet/test_masks"
+test_image_path = "/home/student515/Documents/thesis/Dataset/Unet/test_images/Cu"
+test_mask_path = "/home/student515/Documents/thesis/Dataset/Unet/test_masks/Cu"
 
-test_weights_path = "/home/student515/Documents/thesis/thesis/U-net_custom/model_test/exp-20"
+test_weights_path = "/home/student515/Documents/thesis/thesis/U-net_custom/model_test/final_model_Cu_Ti_test"
 
 weights_paths = sorted(glob.glob(os.path.join(test_weights_path, "*.hdf5")))
 
-test_save_path="/home/student515/Documents/thesis/Dataset/Unet/test_predictions/exp-20"
+test_save_path="/home/student515/Documents/thesis/Dataset/Unet/test_predictions/final_model_Cu_test"
 os.makedirs(test_save_path, exist_ok=True)
 
 test_text_file_path = test_save_path + "/test_results.json"
