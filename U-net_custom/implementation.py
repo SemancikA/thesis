@@ -1,4 +1,5 @@
 import tkinter as tk
+from customtkinter import *
 from tkinter import filedialog, messagebox
 import os
 from model import unet
@@ -100,6 +101,7 @@ def image_processing(input_path, output_path):
 # Set up the main GUI window
 root = tk.Tk()
 root.title("Metallography image processor")
+
 
 # Text to explain the purpose of the program
 explanation = tk.Label(root, text="This program processes metallography images to detect defects. Program expects input images in .tif format ONLY.")
